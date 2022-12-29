@@ -14,6 +14,14 @@ const int second_string=28;  //second string on LCD
 const int third_string=44;  //third string on LCD
 const int fourth_string=62;  //fourth string on LCD
 
+const float filter_coef=100; //filter for measuring current
+const int display_bypass_value=1000; //display bypass for increase perfomance
+int display_bypass_iterator=0;
+
+float i; //current current
+
+
+
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1); // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 
 void setup() { 
@@ -43,20 +51,32 @@ delay(1000);
 }
 
 
+void display_bypass(){
+  display_bypass_iterator++;
+  if(display_bypass_iterator>=display_bypass_value){
+    display_bypass_iterator=0;
+    display.clearDisplay();             
+    display.setCursor(0,first_string);             
+    display.println(i);
+    display.display();
+  }
+
+
+}
+
 void loop() {  
   // put your main code here, to run repeatedly:
-  Serial.print(digitalRead(btn_pin));
-  Serial.print("---");
-  Serial.println(analogRead(i_pin));
+  
+  i=i+( float(analogRead(i_pin)-i) /filter_coef);
+//  Serial.print(digitalRead(btn_pin));
+//  Serial.print("---");
+//  Serial.println(i);
 
-  display.clearDisplay();             
-  display.setCursor(0,first_string);             
-  display.println(analogRead(i_pin));
-  display.display();
 
+  display_bypass();
+  
   if(digitalRead(btn_pin)==0) tone(3,1000,1000);
   
-  delay(100);
 
   
 
