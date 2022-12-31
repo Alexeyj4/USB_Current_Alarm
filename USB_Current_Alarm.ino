@@ -5,6 +5,7 @@
 
 const int i_pin=14; //I sensor I pin A0
 const int btn_pin=9; //Button pin
+const int buzzer_pin=3; //Button pin
 const int manual_switch_pin=4; // switch pin //switch for manual set 8300
 
 const int SCREEN_WIDTH=128; // OLED display width, in pixels
@@ -18,7 +19,12 @@ const float filter_coef=100; //filter for measuring current
 const int display_bypass_value=1000; //display bypass for increase perfomance
 int display_bypass_iterator=0;
 
-float i; //current current
+float i; //current current IN ADC UNITS
+
+int i_min0=4; //i in mA
+int i_min=10;
+int i_max=16; //i must be 0.._min0 or i_min..i_max
+int i_not_ok_flag=0; //flag if i is abnormal //0-ok; 1-low; 2-high
 
 
 
@@ -39,17 +45,17 @@ if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
 }
 
 display.setFont(&FreeSerif9pt7b);
-display.clearDisplay();
 display.setTextSize(1);             
 display.setTextColor(WHITE);        
-display.setCursor(0,first_string);             
-display.println("Loading...");
-display.display();
-delay(1000);
 
 
 }
 
+
+int i2ma(float i_adc){
+  return floor(i_adc/10);
+}
+ 
 
 void display_bypass(){
   display_bypass_iterator++;
@@ -57,25 +63,33 @@ void display_bypass(){
     display_bypass_iterator=0;
     display.clearDisplay();             
     display.setCursor(0,first_string);             
-    display.println(i);
+    display.print("i=");display.print(i2ma(i));display.print(" mA");
     display.display();
   }
-
-
 }
+
+void check_i(int i_ma){
+  i_not_ok_flag=0;
+  if(i_ma<i_min0)return;
+  if(i_ma<i_min){i_not_ok_flag=1; return;}
+  if(i_ma>i_max){i_not_ok_flag=2; return;}
+}
+
+
 
 void loop() {  
   // put your main code here, to run repeatedly:
   
   i=i+( float(analogRead(i_pin)-i) /filter_coef);
-//  Serial.print(digitalRead(btn_pin));
-//  Serial.print("---");
-//  Serial.println(i);
 
 
   display_bypass();
   
-  //if(digitalRead(btn_pin)==0) tone(3,1000,1000);
+  check_i(i2ma(i));
+  if(i_not_ok_flag==1)tone(buzzer_pin,13000,50);
+  if(i_not_ok_flag==2)tone(buzzer_pin,10000,50);
+  
+
   
 
   
