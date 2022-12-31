@@ -75,7 +75,7 @@ void loop() {
 
   display_bypass();
   
-  if(digitalRead(btn_pin)==0) tone(3,1000,1000);
+  //if(digitalRead(btn_pin)==0) tone(3,1000,1000);
   
 
   
