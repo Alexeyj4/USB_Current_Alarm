@@ -19,11 +19,14 @@ const float filter_coef=100; //filter for measuring current
 const int display_bypass_value=1000; //display bypass for increase perfomance
 int display_bypass_iterator=0;
 
+const float i_dev=0.2; //i limit deviation //def=0.2 (20%)
+
 float i; //current current IN ADC UNITS
 
 int i_min0=4; //i in mA
-int i_min=10;
-int i_max=16; //i must be 0.._min0 or i_min..i_max
+int i_min=10; //i in mA
+int i_avg=13; //i in mA
+int i_max=16; //i in mA // i must be 0.._min0 or i_min..i_max
 int i_not_ok_flag=0; //flag if i is abnormal //0-ok; 1-low; 2-high
 
 
@@ -64,6 +67,12 @@ void display_bypass(){
     display.clearDisplay();             
     display.setCursor(0,first_string);             
     display.print("i=");display.print(i2ma(i));display.print(" mA");
+    display.setCursor(0,second_string);             
+    display.print("i avg=");display.print(i_avg);display.print("+/-");display.print(round(i_dev*100));display.print("%");
+    display.setCursor(0,third_string);             
+    display.print("i min=");display.print(i_min);display.print("mA");
+    display.setCursor(0,fourth_string);             
+    display.print("i max=");display.print(i_max);display.print("mA");
     display.display();
   }
 }
@@ -75,6 +84,12 @@ void check_i(int i_ma){
   if(i_ma>i_max){i_not_ok_flag=2; return;}
 }
 
+void setup_limit(int i_ma){
+  i_avg=i_ma;
+  i_min=i_avg/(i_dev+1);
+  i_max=i_avg*(i_dev+1);  
+}
+
 
 
 void loop() {  
@@ -82,6 +97,7 @@ void loop() {
   
   i=i+( float(analogRead(i_pin)-i) /filter_coef);
 
+  if(digitalRead(btn_pin)==0) setup_limit(i2ma(i));
 
   display_bypass();
   
