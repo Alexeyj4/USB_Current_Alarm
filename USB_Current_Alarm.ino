@@ -1,12 +1,16 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <Fonts/FreeSerif9pt7b.h>
-#include <AD9833.h>   // библиотека для работы с модулем AD9833
+#include <EEPROM.h>
 
 const int i_pin=14; //I sensor I pin A0
 const int btn_pin=9; //Button pin
 const int buzzer_pin=3; //Button pin
 const int manual_switch_pin=4; // switch pin //switch for manual set 8300
+
+const int i_avg_addr=0; //i_avg address in eeprom
+const int i_min_addr=2; //i_avg address in eeprom
+const int i_max_addr=4; //i_avg address in eeprom
 
 const int SCREEN_WIDTH=128; // OLED display width, in pixels
 const int SCREEN_HEIGHT=64; // OLED display height, in pixels
@@ -23,33 +27,41 @@ const float i_dev=0.2; //i limit deviation //def=0.2 (20%)
 
 float i; //current current IN ADC UNITS
 
-int i_min0=4; //i in mA
-int i_min=10; //i in mA
-int i_avg=13; //i in mA
-int i_max=16; //i in mA // i must be 0.._min0 or i_min..i_max
+int i_min0=4; //i in mA //i of usb-ttl adapter
+int i_min; //i in mA
+int i_avg; //i in mA
+int i_max; //i in mA // i must be 0.._min0 or i_min..i_max
 int i_not_ok_flag=0; //flag if i is abnormal //0-ok; 1-low; 2-high
 
 
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1); // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 
+void load_limits(){
+  EEPROM.get(i_avg_addr,i_avg);
+  EEPROM.get(i_min_addr,i_min);
+  EEPROM.get(i_max_addr,i_max);  
+}
+
 void setup() { 
   // put your setup code here, to run once:
 
-Serial.begin(9600);
-
-pinMode(btn_pin, INPUT_PULLUP); 
-pinMode(i_pin, INPUT);
-analogReference(INTERNAL);
-
-if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
-  Serial.println("SSD1306 allocation failed");
-  for(;;);
-}
-
-display.setFont(&FreeSerif9pt7b);
-display.setTextSize(1);             
-display.setTextColor(WHITE);        
+  load_limits();
+  
+  Serial.begin(9600);
+  
+  pinMode(btn_pin, INPUT_PULLUP); 
+  pinMode(i_pin, INPUT);
+  analogReference(INTERNAL);
+  
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
+    Serial.println("SSD1306 allocation failed");
+    for(;;);
+  }
+  
+  display.setFont(&FreeSerif9pt7b);
+  display.setTextSize(1);             
+  display.setTextColor(WHITE);        
 
 
 }
@@ -90,6 +102,12 @@ void setup_limit(int i_ma){
   i_max=i_avg*(i_dev+1);  
 }
 
+void save_limits(){
+  EEPROM.put(i_avg_addr,i_avg);
+  EEPROM.put(i_min_addr,i_min);
+  EEPROM.put(i_max_addr,i_max);  
+}
+
 
 
 void loop() {  
@@ -97,7 +115,10 @@ void loop() {
   
   i=i+( float(analogRead(i_pin)-i) /filter_coef);
 
-  if(digitalRead(btn_pin)==0) setup_limit(i2ma(i));
+  if(digitalRead(btn_pin)==0) {
+    setup_limit(i2ma(i));
+    save_limits();
+  }
 
   display_bypass();
   
