@@ -22,6 +22,8 @@ const int fourth_string=62;  //fourth string on LCD
 const float filter_coef=100; //filter for measuring current
 const int display_bypass_value=1000; //display bypass for increase perfomance
 int display_bypass_iterator=0;
+const int display_blink_value=1; //def=10 //for blinks i violation string //how often will blinks
+int display_blink_iterator=0; 
 
 const float i_dev=0.2; //i limit deviation //def=0.2 (20%)
 
@@ -81,10 +83,32 @@ void display_bypass(){
     display.print("i=");display.print(i2ma(i));display.print(" mA");
     display.setCursor(0,second_string);             
     display.print("i avg=");display.print(i_avg);display.print("+/-");display.print(round(i_dev*100));display.print("%");
-    display.setCursor(0,third_string);             
-    display.print("i min=");display.print(i_min);display.print("mA");
-    display.setCursor(0,fourth_string);             
-    display.print("i max=");display.print(i_max);display.print("mA");
+               
+    if(i_not_ok_flag==1){
+      if(display_blink_iterator>0){
+        display.setCursor(0,third_string);  
+        display.print("i min=");display.print(i_min);display.print("mA");
+        if(display_blink_iterator>display_blink_value)display_blink_iterator=display_blink_value*(-1);
+      }
+      display_blink_iterator++;
+    }
+
+    if(i_not_ok_flag==2){
+      if(display_blink_iterator>0){
+        display.setCursor(0,fourth_string);  
+        display.print("i max=");display.print(i_max);display.print("mA");
+        if(display_blink_iterator>display_blink_value)display_blink_iterator=display_blink_value*(-1);
+      }
+      display_blink_iterator++;
+    }
+
+    if(i_not_ok_flag==0){
+        display.setCursor(0,third_string);  
+        display.print("i min=");display.print(i_min);display.print("mA");
+        display.setCursor(0,fourth_string);  
+        display.print("i max=");display.print(i_max);display.print("mA");
+    }
+
     display.display();
   }
 }
@@ -123,8 +147,8 @@ void loop() {
   display_bypass();
   
   check_i(i2ma(i));
-  if(i_not_ok_flag==1)tone(buzzer_pin,13000,50);
-  if(i_not_ok_flag==2)tone(buzzer_pin,10000,50);
+  if(i_not_ok_flag==1)tone(buzzer_pin,5000,5);
+  if(i_not_ok_flag==2)tone(buzzer_pin,1000,5);
   
 
   
