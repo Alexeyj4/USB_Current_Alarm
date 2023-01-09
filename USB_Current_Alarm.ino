@@ -29,7 +29,7 @@ const float i_dev=0.2; //i limit deviation //def=0.2 (20%)
 
 float i; //current current IN ADC UNITS
 
-int i_min0=4; //i in mA //i of usb-ttl adapter
+int i_min0=6; //i in mA //i of usb-ttl adapter
 int i_min; //i in mA
 int i_avg; //i in mA
 int i_max; //i in mA // i must be 0.._min0 or i_min..i_max
